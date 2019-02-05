@@ -54,19 +54,22 @@ class Shader:
         if self.glid:                      # if this is a valid shader object
             GL.glDeleteProgram(self.glid)  # object dies => destroy GL object
 
-
+#gl_Position = vec4(position, 1);
 # ------------  Simple color shaders ------------------------------------------
 COLOR_VERT = """#version 330 core
 layout(location = 0) in vec3 position;
+out vec4 ColorPosition;
 void main() {
     gl_Position = vec4(position, 1);
-
+    ColorPosition = gl_Position;
 }"""
 
 COLOR_FRAG = """#version 330 core
+uniform vec3 color;
+in vec4 ColorPosition;
 out vec4 outColor;
 void main() {
-    outColor = vec4(1, 0, 0, 1);
+    outColor = vec4(ColorPosition[0]+0.5, ColorPosition[1]+0.5, ColorPosition[2], 1);
 
 }"""
 
@@ -94,13 +97,15 @@ class SimpleTriangle:
         GL.glBindVertexArray(0)
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, 0)
 
-    def draw(self, projection, view, model, color_shader):
+    def draw(self, projection, view, model, color_shader, color_array):
         GL.glUseProgram(color_shader.glid)
 
         # draw triangle as GL_TRIANGLE vertex array, draw array call
         GL.glBindVertexArray(self.glid)
         GL.glDrawArrays(GL.GL_TRIANGLES, 0, 3)
         GL.glBindVertexArray(0)
+        my_color_location = GL.glGetUniformLocation(color_shader.glid, 'color')
+        GL.glUniform3fv(my_color_location, 1, color_array)
 
     def __del__(self):
         GL.glDeleteVertexArrays(1, [self.glid])
@@ -111,7 +116,7 @@ class SimpleTriangle:
 class Viewer:
     """ GLFW viewer window, with classic initialization & graphics loop """
 
-    def __init__(self, width=640, height=480):
+    def __init__(self, width=640, height=480, color_array = (0.6, 0.6, 0.9)):
 
         # version hints: create GL window with >= OpenGL 3.3 and core profile
         glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 3)
@@ -140,6 +145,7 @@ class Viewer:
 
         # initially empty list of object to draw
         self.drawables = []
+        self.color_array = color_array
 
     def run(self):
         """ Main render loop for this OpenGL window """
@@ -149,7 +155,7 @@ class Viewer:
 
             # draw our scene objects
             for drawable in self.drawables:
-                drawable.draw(None, None, None, self.color_shader)
+                drawable.draw(None, None, None, self.color_shader, self.color_array)
 
             # flush render commands, and swap draw buffers
             glfw.swap_buffers(self.win)
@@ -166,6 +172,8 @@ class Viewer:
         if action == glfw.PRESS or action == glfw.REPEAT:
             if key == glfw.KEY_ESCAPE or key == glfw.KEY_Q:
                 glfw.set_window_should_close(self.win, True)
+            if key == glfw.KEY_ENTER:
+                self.color_array = ((self.color_array[0]+0.1)%1, (self.color_array[1]+0.1)%1, (self.color_array[2]+0.1)%1)
 
 
 # -------------- main program and scene setup --------------------------------
