@@ -56,6 +56,7 @@ class Shader:
             GL.glDeleteProgram(self.glid)  # object dies => destroy GL object
 
 #gl_Position = vec4(position, 1);
+
 # ------------  Simple color shaders ------------------------------------------
 COLOR_VERT = """#version 330 core
 uniform mat4 viewMatrix;
@@ -169,7 +170,7 @@ class SimplePiramid:
         #GL.glUniform3fv(my_color_location, 1, color_array)
 
         # draw triangle as GL_TRIANGLE vertex array, draw array call
-        GL.glBindVertexArray(self.glid)perspective
+        GL.glBindVertexArray(self.glid)
         GL.glDrawArrays(GL.GL_TRIANGLES, 0, 3)
         GL.glBindVertexArray(0)
 
